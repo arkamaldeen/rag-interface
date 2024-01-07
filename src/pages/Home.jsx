@@ -5,16 +5,16 @@ import { useAppState } from '../AppStateContext';
 import { useNavigate } from 'react-router-dom';
 import ChatMessages from '../components/ChatMessages';
 import ChatInput from '../components/ChatInput';
+import { getResponse } from '../api';
 
 
 function Home() {
-    const { input, setInput, messages, setMessages} = useAppState()
+    const { input, setInput, messages, setMessages } = useAppState()
     const [loading, setLoading] = useState(false);
     const [partialMessage, setPartialMessage] = useState('');
     const [inputDisabled, setInputDisabled] = useState(false);
 
     const navigate = useNavigate();
-    console.log(messages)
 
     useEffect(() => {
         async function checkAuth() {
@@ -42,7 +42,7 @@ function Home() {
     //     }
     // }, [loading]);
 
-    const handleSendMessage = (text) => {
+    const handleSendMessage = async (text) => {
         if (text.trim() !== '') {
             // Store the user message separately
             const userMessage = { text, isUser: true };
@@ -51,11 +51,17 @@ function Home() {
             setLoading(true);
             setInputDisabled(true);
 
-            // Simulating delay for demonstration purposes
-            setTimeout(() => {
-                // Commenting out the fetchModelResponse call
-                // const modelResponse = await fetchModelResponse(text);
-                const modelResponse = text; // For demonstration, using input text as response
+            try {
+                const response = await getResponse(text);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`)
+                }
+
+                const data = await response.json()
+                const modelResponse = data.response;
+
+
 
                 const words = modelResponse.split(' ');
                 let partialMessage = words.slice(0, 10).join(' ');
@@ -79,9 +85,21 @@ function Home() {
                         setInputDisabled(false);
                     }
                 }, 50);
-            }, 3000); // Adjust the delay based on your scenario
+
+                // Add a timeout to wait for the interval to finish
+                await new Promise(resolve => setTimeout(resolve, words.length * 50));
+
+            } catch (error) {
+                console.log("Error:", error.message)
+            } finally {
+                setLoading(false);
+                setInputDisabled(false);
+            }
         }
     };
+
+    console.log("loading state", loading)
+    console.log("partialMessage", partialMessage)
 
     return (
         <div className="content bg-secondary-bg font-secondary ">
@@ -90,7 +108,7 @@ function Home() {
                     {loading && <ChatMessages text={partialMessage} isUser={false} />}
                     {messages.map((message, index) => (
 
-                        <ChatMessages key={index} text={message.text} isUser={message.isUser} />
+                        <ChatMessages key={index} text={message.text} isUser={message.isUser} isLoading={loading} />
                     ))}
                 </div>
                 <div className='h-full bg-primary rounded-lg p-5'>

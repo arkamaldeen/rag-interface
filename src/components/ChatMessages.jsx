@@ -1,10 +1,19 @@
-import React from 'react';
-import Help from '../images/help.svg'
+import React , { useState, useEffect } from 'react';
 
-const ChatMessages = ({ text, isUser }) => {
+
+import Help from '../images/help.svg'
+import ReasoningSideBar from './ReasoningSideBar';
+
+const ChatMessages = ({ text, isUser , isLoading}) => {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [isToggleOpen, setToggleOpen] = useState(false);
+
+
+
   const messageStyle = isUser
     ? 'flex gap-3 justify-end  text-left'
     : 'flex  gap-3 justify-start text-left ';
+
 
   const formattedText = text.split('\n').map((line, index) => (
     <React.Fragment key={index}>
@@ -12,6 +21,7 @@ const ChatMessages = ({ text, isUser }) => {
       {line}
     </React.Fragment>
   ));
+
 
   return (
     <div className='w-full'>
@@ -23,14 +33,15 @@ const ChatMessages = ({ text, isUser }) => {
           </div>
           {formattedText}
         </div>
-        {!isUser && 
-        <div className="flex flex-col justify-end flex-shrink-0">
-        <button className='reasoning bg-[#2525259c] p-2 rounded-lg' onClick={() => console.log("Reasoning clicked!")}>
-          <img src={Help} alt='reasoning ' className='h-[20px]'/>
-        </button>
-        </div> }
+        {!isUser && (isLoading === false) &&
+          <div className="flex flex-col justify-end flex-shrink-0">
+            <button className='reasoning bg-[#2525259c] p-2 rounded-lg' onClick={() => setToggleOpen(!isToggleOpen)}>
+              <img src={Help} alt='reasoning ' className='h-[20px]' />
+            </button>
+          </div>}
         {isUser && <div className="flex-none w-[5px] h-100 bg-secondary rounded-full mr-2"></div>}
       </div>
+      <ReasoningSideBar isToggleOpen={isToggleOpen} handleCloseToggle={() => setToggleOpen(!isToggleOpen)}/>
     </div>
   );
 };

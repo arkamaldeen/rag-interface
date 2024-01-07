@@ -1,9 +1,12 @@
-import { Navigate, redirect, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, json, redirect, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../AppStateContext';
 import Dropdown from '../components/Form/Dropdown';
 
+import { config } from '../api';
+
 export default function Settings() {
     const [searchParams, setSearchParams] = useSearchParams()
+    const { messages, setMessages } = useAppState()
     const message = searchParams.get("message")
     const { input, setInput } = useAppState();
     const navigate = useNavigate();
@@ -24,19 +27,23 @@ export default function Settings() {
 
     function handleSubmit(event) {
         event.preventDefault()
-        // submitToApi(formData)
-        // setConfigStatus(false)
-        console.log(`submitting... ${input}`)
 
-        // const submit = async () => {
-        //     setConfigUpdating(true)
-        //     await config(formData)
+        const submit = async () => {
+            try {
+                const response = await config(input);
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+    
+                const data = await response.json();
+                setMessages([{ text: data.response, isUser: false }, ...messages]);
+            } catch (error) {
+                console.error("Error:", error.message);
+            }
+        }
 
-        //     console.log("Configurations updated!")
-        //     setConfigUpdating(false)
-        // }
-
-        // submit()
+        submit()
         navigate("/");
     }
 
@@ -47,10 +54,10 @@ export default function Settings() {
             class: 8,
             subject: "",
         })
-        
+
     }
     console.log(input)
-    
+
     return (
         <section className="content settings">
             <div className='flex justify-center items-center'>
